@@ -2,14 +2,16 @@ import pandas as pd
 
 # === 設定 ===
 csv_path = "transactions.csv"  # CSVファイルのパス
-target_word = "サミットストア"  # 抽出したい単語
-date_column = "取引日"         # 日付が入っている列名
-amount_column = "出金金額（円）"  # 金額が入っている列名
+date_column = "取引日"         # 日付列
+amount_column = "出金金額（円）"  # 金額列
+
+# コンビニ系キーワード
+conbini_keywords = ["ファミリーマート", "セブン-イレブン", "ローソン", "NewDays", "ミニストップ"]
 
 # === CSV読み込み ===
 df = pd.read_csv("./csv_storage/Transactions_20240811-20250811.csv")
 
-# 金額を数値化（カンマ除去、欠損は0）
+# 金額を数値化
 df[amount_column] = (
     df[amount_column]
     .astype(str)
@@ -21,10 +23,17 @@ df[amount_column] = (
 # 日付をdatetime型に変換
 df[date_column] = pd.to_datetime(df[date_column], errors="coerce")
 
-# 特定の単語を含む行を抽出
-target_df = df[df[df.columns].apply(lambda row: row.astype(str).str.contains(target_word, case=False).any(), axis=1)]
+# コンビニ系の取引を抽出
+conbini_df = df[df["取引先"].apply(lambda x: any(k in str(x) for k in conbini_keywords))]
 
-# 月ごとの合計 → 平均
-monthly_avg = target_df.groupby(target_df[date_column].dt.to_period("M"))[amount_column].sum().mean()
+# 月ごとの支払い合計
+monthly_totals = conbini_df.groupby(conbini_df[date_column].dt.to_period("M"))[amount_column].sum()
 
-print(f"『{target_word}』を含む取引の月平均: {monthly_avg:.0f}円")
+# 1年分の平均（全月合計 ÷ 月数）
+yearly_avg = monthly_totals.mean()
+
+# === 結果表示 ===
+print("📅 月ごとのコンビニ支払い額")
+print(monthly_totals)
+
+print(f"\n📊 1年間のコンビニ平均支払い額（1か月あたり）: {yearly_avg:.0f}円")
