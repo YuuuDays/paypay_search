@@ -2,96 +2,100 @@ import pandas as pd
 import re
 from src.util.read_csv import read_csv
 
-def monthly_expenses():
-    csv_path = "./csv_storage/202508.csv"
+def monthly_expenses(csv_path: str) -> list[tuple[str, int]]:
+    
 
     exclude_keywords = [
         "まいばすけっと", "サミット", "サミット／ＮＦＣ", "CURSOR", "ＢＩＧＬＯＢＥ利用料",
         "ＵＱ　ｍｏｂｉｌｅご利用料金", "ファミリーマート", "セブン-イレブン",
-        "ローソン", "NewDays", "ミニストップ"
+        "ローソン", "NewDays", "ミニストップ","セブン－イレブン","ＣＵＲＳＯＲ，  ＡＩ  ＰＯＷＥＲＥＤ  Ｉ",
+        "ＵＱ  ｍｏｂｉｌｅご利用料金",
     ]
 
     rows = []
     
-    with open(csv_path, "r", encoding="cp932") as f:
-        next(f)  # 1行目スキップ
-        lines = f.readlines()
+    # csvデータを読み込み&1行読み飛ばし値を返す
+    lines = read_csv(csv_path)
+    if not lines:
+        print("恐らくcsvファイルが見つかりません")
+        return None
+    
+    """
+    空白行をスキップする
+    """
+    lines = skip_blank_lines(lines)
 
-    # csvデータを1行ずつ処理
+    """
+    フィルターの実装(不要ワードが含まれている場合除去)
+    """
+    lines = filter_out_unwanted_words(lines, exclude_keywords)
+
+    """
+    支払い名と金額を取得 & 重複した支払い名と金額を合算する
+    """
+    payment_dict = get_payment_name_and_amount(lines)
+
+    """
+    金額が降順になるように並び替え
+    """
+    sorted_items = sorted(payment_dict.items(), key=lambda x: x[1], reverse=False)
+    return sorted_items
+
+
+        
+
+# 空白飛ばし
+def skip_blank_lines(lines: list[str]) -> list[str]:
+    # [式 for 変数 in イテラブル if 条件]
+    return [line for line in lines if line.strip()]
+            #  ↑    ↑     ↑        ↑
+            #  │    │     │        └─ 条件（空白でない場合のみ）
+            #  │    │     └─ 元のリスト
+            #  │    └─ 各要素を表す変数
+            #  └─ 新しいリストに含める要素
+
+# 不要ワード除去 
+def filter_out_unwanted_words(lines: list[str], exclude_keywords: list[str]) -> list[str]:
+    return [line for line in lines if not any(k in line for k in exclude_keywords)]
+
+#支払い名と金額のみ (+ 最後の行は飛ばす) & 重複した支払い名と金額を合算する
+def get_payment_name_and_amount(lines: list[str]) -> dict[str, int]:
+    payment_dict = {}  # 辞書で管理
+    
     for line in lines:
-        print(line.rstrip())
-        # 空白行をスキップ
-        if not line.strip():  
+        parts = line.split(",")
+        # print(parts)
+     
+        # 最後の不要な行を削除(合計金額を算出する行_のちに使うかもしれない)
+        if parts[0] == "":
+            break
+
+        # 支払い名取得
+        payment_name = parts[1]
+        
+        # 金額取得（カンマ3個目以降から最初の数値を探す）
+        amount = None
+        for i in range(2, len(parts)):
+            if parts[i].strip().isdigit():
+                amount = parts[i]
+                break
+        
+        # 金額出ない場合、再度取得
+        if not amount.isdigit():
+            amount = parts[3]
+        
+        # 辞書に追加（重複時は自動で合算）
+        try:
+            amount_int = int(amount)
+        except ValueError:
+            print(f"警告: 数値に変換できません '{amount}' (支払い名: {payment_name})")
             continue
         
-        """
-        any関数...複数条件の中1つでもTrueならTrueを返す
-        k in line...lineにkが含まれているかどうか
-        """
-        # ここで除外ワードを除外
-        if any(k in line for k in exclude_keywords):
-            continue
-        # ここで支払い名と金額を取得
-        # parts = line.split(",")
-        # if len(parts) < 3:
-        #     continue
-        # print(line.rstrip())  # 改行文字を削除して出力
-        
-        
+        payment_dict[payment_name] = payment_dict.get(payment_name, 0) + amount_int
+    
+    # print(payment_dict)
 
-
-
-
-        # line = line.strip()
-    #     if not line:
-    #         continue
-
-    #     parts = line.split(",")
-    #     if len(parts) < 3:
-    #         continue
-
-    #     date = parts[0]
-
-    #     # 日付以降で最初に数値らしい要素が出るまでを「支払い名」として結合
-    #     payname_parts = []
-    #     amount = None
-    #     for p in parts[1:]:
-    #         p_stripped = p.strip()
-    #         if re.match(r"^\d+$", p_stripped):  # 数値だけの列が来たら金額確定
-    #             amount = int(p_stripped)
-    #             break
-    #         payname_parts.append(p_stripped)
-
-    #     payname = " ".join(payname_parts)
-
-    #     # 金額が見つからなかった場合はスキップ
-    #     if amount is None:
-    #         continue
-
-    #     rows.append([payname, amount])
-
-    # df = pd.DataFrame(rows, columns=["支払い名", "金額"])
-
-    # # 除外ワード除去
-    # mask_exclude = df["支払い名"].apply(lambda x: any(k in str(x) for k in exclude_keywords))
-    # df_filtered = df[~mask_exclude]
-
-    # # 集計
-    # monthly_summary = df_filtered.groupby("支払い名", as_index=False)["金額"].sum()
-    # total_expense = monthly_summary["金額"].sum()
-
-    # print("📅 月ごとの支払い名別支出一覧（除外ワード含まず）")
-    # print(monthly_summary.sort_values("金額", ascending=False))
-    # print("\n💰 月合計支出:", total_expense, "円")
-
-    # monthly_summary.to_csv("monthly_expenses_filtered.csv", encoding="utf-8-sig", index=False)
-
-
-def bai_num(n: int) -> int:
-    return n * 2
-
-
-
+    return payment_dict
 
 
 
