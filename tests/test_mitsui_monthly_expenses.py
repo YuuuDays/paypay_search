@@ -1,5 +1,5 @@
 import unittest
-from src.monthly_expenses import *
+from src.mitsui_monthly_expenses import *
 from unittest.mock import patch
 
 # unittest.TestCase: 継承する親クラス（unittestの基本クラス）
