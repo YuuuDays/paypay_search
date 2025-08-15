@@ -87,6 +87,9 @@ class TestMonthlyExpenses(unittest.TestCase):
 
         result = get_payment_name_and_amount(test_csv_data)
         self.assertEqual(result, expected_csv_data)
+
+    # paypayのcsv対応
+    def test_7_paypay_csv_support(self):
         
 """
 その他assertメソッド

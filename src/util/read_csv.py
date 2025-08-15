@@ -1,8 +1,14 @@
 import pandas as pd
 
-def read_csv(path: str) -> pd.DataFrame:
+def read_csv(path: str, isMitsui: bool = True) -> pd.DataFrame:
+
+    if isMitsui:
+        encoding = "cp932"
+    else: # paypay
+        encoding = "utf-8"
+
     try:
-        with open(path, "r", encoding="cp932") as f:
+        with open(path, "r", encoding= encoding) as f:
             next(f)  # 1行目スキップ
             lines = f.readlines()
             return lines

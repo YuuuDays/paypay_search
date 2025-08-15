@@ -2,7 +2,7 @@ import pandas as pd
 import re
 from src.util.read_csv import read_csv
 
-def monthly_expenses(csv_path: str) -> list[tuple[str, int]]:
+def monthly_expenses(csv_path: str, isMitsui: bool = True) -> list[tuple[str, int]]:
     
 
     exclude_keywords = [
@@ -12,10 +12,16 @@ def monthly_expenses(csv_path: str) -> list[tuple[str, int]]:
         "ＵＱ  ｍｏｂｉｌｅご利用料金",
     ]
 
-    rows = []
-    
+    # 三井住友とpaypayで分岐
+    if isMitsui:
+        isMitsui = True
+    else:
+        isMitsui = False
+
     # csvデータを読み込み&1行読み飛ばし値を返す
-    lines = read_csv(csv_path)
+    lines = read_csv(csv_path,isMitsui)
+
+    # null Check
     if not lines:
         print("恐らくcsvファイルが見つかりません")
         return None
@@ -76,9 +82,18 @@ def get_payment_name_and_amount(lines: list[str]) -> dict[str, int]:
         # 金額取得（カンマ3個目以降から最初の数値を探す）
         amount = None
         for i in range(2, len(parts)):
+            parts[i] = parts[i].replace('"', "")
+
+            # 文字列か数値か判断
             if parts[i].strip().isdigit():
+                
                 amount = parts[i]
                 break
+        
+        # 金額が見つからない場合の処理
+        if amount is None:
+            # print(f"警告: 金額が見つかりません (支払い名: {payment_name})")
+            continue
         
         # 金額出ない場合、再度取得
         if not amount.isdigit():
