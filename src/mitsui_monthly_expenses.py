@@ -9,7 +9,7 @@ def monthly_expenses(csv_path: str, isMitsui: bool = True) -> list[tuple[str, in
         "まいばすけっと", "サミット", "サミット／ＮＦＣ", "CURSOR", "ＢＩＧＬＯＢＥ利用料",
         "ＵＱ　ｍｏｂｉｌｅご利用料金", "ファミリーマート", "セブン-イレブン",
         "ローソン", "NewDays", "ミニストップ","セブン－イレブン","ＣＵＲＳＯＲ，  ＡＩ  ＰＯＷＥＲＥＤ  Ｉ",
-        "ＵＱ  ｍｏｂｉｌｅご利用料金",
+        "ＵＱ  ｍｏｂｉｌｅご利用料金","ＮｅｗＤａｙｓ","セブンーイレブン"
     ]
 
     # 三井住友とpaypayで分岐
@@ -77,7 +77,7 @@ def get_payment_name_and_amount(lines: list[str]) -> dict[str, int]:
             break
 
         # 支払い名取得
-        payment_name = parts[1]
+        payment_name = parts[1].replace('"', "")
         
         # 金額取得（カンマ3個目以降から最初の数値を探す）
         amount = None
