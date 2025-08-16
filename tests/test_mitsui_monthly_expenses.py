@@ -90,7 +90,13 @@ class TestMonthlyExpenses(unittest.TestCase):
 
     # paypayのcsv対応
     def test_7_paypay_csv_support(self):
-        
+        pass
+
+
+
+
+
+
 """
 その他assertメソッド
 class TestMonthlyExpenses(unittest.TestCase):

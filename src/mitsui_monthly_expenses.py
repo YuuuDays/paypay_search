@@ -1,16 +1,16 @@
 import pandas as pd
 import re
+import os
 from src.util.read_csv import read_csv
+from dotenv import load_dotenv
 
 def monthly_expenses(csv_path: str, isMitsui: bool = True) -> list[tuple[str, int]]:
     
-
-    exclude_keywords = [
-        "まいばすけっと", "サミット", "サミット／ＮＦＣ", "CURSOR", "ＢＩＧＬＯＢＥ利用料",
-        "ＵＱ　ｍｏｂｉｌｅご利用料金", "ファミリーマート", "セブン-イレブン",
-        "ローソン", "NewDays", "ミニストップ","セブン－イレブン","ＣＵＲＳＯＲ，  ＡＩ  ＰＯＷＥＲＥＤ  Ｉ",
-        "ＵＱ  ｍｏｂｉｌｅご利用料金","ＮｅｗＤａｙｓ","セブンーイレブン"
-    ]
+    # .envファイルを読み込む
+    load_dotenv()
+    exclude_keywords = os.getenv("EXCLUDE_KEYWORDS", "")
+    exclude_keywords = exclude_keywords.split(",") if exclude_keywords else []
+    
 
     # 三井住友とpaypayで分岐
     if isMitsui:
