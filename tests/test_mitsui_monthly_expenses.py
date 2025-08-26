@@ -93,6 +93,7 @@ class TestMonthlyExpenses(unittest.TestCase):
         pass
 
 
+
 """
 その他assertメソッド
 class TestMonthlyExpenses(unittest.TestCase):
