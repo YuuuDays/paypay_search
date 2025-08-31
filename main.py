@@ -3,6 +3,7 @@ from src.util.csv_path_get_and_display import start
 from src.util.judment_is_mitui import input_csv_info
 
 
+
 def main():
 
     #csvファイルパスの選択&取得&表示
