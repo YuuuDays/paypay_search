@@ -39,7 +39,7 @@ def monthly_expenses(csv_path: str, isMitsui: bool = True) -> list[tuple[str, in
     """
     支払い名と金額を取得 & 重複した支払い名と金額を合算する
     """
-    payment_dict = get_payment_name_and_amount(lines)
+    payment_dict = get_payment_name_and_amount(lines, isMitsui)
 
     """
     金額が降順になるように並び替え
@@ -65,7 +65,7 @@ def filter_out_unwanted_words(lines: list[str], exclude_keywords: list[str]) -> 
     return [line for line in lines if not any(k in line for k in exclude_keywords)]
 
 #支払い名と金額のみ (+ 最後の行は飛ばす) & 重複した支払い名と金額を合算する
-def get_payment_name_and_amount(lines: list[str]) -> dict[str, int]:
+def get_payment_name_and_amount(lines: list[str], isMitsui: bool) -> dict[str, int]:
     payment_dict = {}  # 辞書で管理
     
     for line in lines:
@@ -76,28 +76,49 @@ def get_payment_name_and_amount(lines: list[str]) -> dict[str, int]:
         if parts[0] == "":
             break
 
-        # 支払い名取得
-        payment_name = parts[1].replace('"', "")
-        
-        # 金額取得（カンマ3個目以降から最初の数値を探す）
-        amount = None
-        for i in range(2, len(parts)):
-            parts[i] = parts[i].replace('"', "")
+        '''
+          三井住友とpaypayで分岐
+        '''
+        if isMitsui:
+            # 三井住友銀行の場合
+            payment_name = parts[1].replace('"', "")
+            
+            # 金額取得（カンマ3個目以降から最初の数値を探す）
+            amount = None
+            for i in range(2, len(parts)):
+                parts[i] = parts[i].replace('"', "")
 
-            # 文字列か数値か判断
-            if parts[i].strip().isdigit():
-                
-                amount = parts[i]
-                break
-        
-        # 金額が見つからない場合の処理
-        if amount is None:
-            # print(f"警告: 金額が見つかりません (支払い名: {payment_name})")
-            continue
-        
-        # 金額出ない場合、再度取得
-        if not amount.isdigit():
-            amount = parts[3]
+                # 文字列か数値か判断
+                if parts[i].strip().isdigit():
+                    amount = parts[i]
+                    break
+            
+            # 金額が見つからない場合の処理
+            if amount is None:
+                continue
+            
+            # 金額出ない場合、再度取得
+            if not amount.isdigit():
+                amount = parts[3]
+        else:
+            '''
+                PayPayの場合
+            '''
+            # 支払い以外はskip
+            if parts[8].replace('"', "") != "支払い":
+                continue
+
+            payment_name = parts[9].replace('"', "")
+            
+            # 出金金額を取得（支払いの場合のみ）
+            amount = parts[1].replace('"', "")
+            amount += parts[2].replace('"', "")
+
+            # 金額が空または'-'の場合はスキップ（入金の場合は処理しない）
+            if amount == '' or amount == '-':
+                continue
+
+        print(payment_name,amount)
         
         # 辞書に追加（重複時は自動で合算）
         try:
